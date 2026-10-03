@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Goyal Electrical Admin</title><link rel="stylesheet" href="styles.css"><style>.admin{max-width:1100px;margin:auto;padding:35px 5%}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:25px;margin:18px 0}.admin input{padding:12px;border:1px solid #ddd;border-radius:9px;width:100%;margin:7px 0}.danger{background:#b42318;color:#fff;border:0}.small{font-size:12px;color:#667085}.gallery-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.gallery-list img{width:100%;height:180px;object-fit:cover;border-radius:12px}@media(max-width:700px){.gallery-list{grid-template-columns:1fr}}</style>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Goyal Electrical Admin</title><link rel="stylesheet" href="styles.css"><style>.admin{max-width:1100px;margin:auto;padding:35px 5%}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:25px;margin:18px 0}.admin input{padding:12px;border:1px solid #ddd;border-radius:9px;width:100%;margin:7px 0}.danger{background:#b42318;color:#fff;border:0}.small{font-size:12px;color:#667085}.gallery-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.gallery-list img,.gallery-list video{width:100%;height:180px;object-fit:cover;border-radius:12px}.media-card{display:flex;flex-direction:column;gap:6px}@media(max-width:700px){.gallery-list{grid-template-columns:1fr}}</style>
 <style>
 .media-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0}
 .media-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border:1px solid #d0d5dd;border-radius:12px;background:#f8fafc;cursor:pointer;font-weight:700}
@@ -11,7 +11,20 @@
 .pdf-status{padding:10px;background:#f8fafc;border-radius:9px;margin-top:8px}
 @media(max-width:700px){.media-actions,.product-form{grid-template-columns:1fr}}
 </style>
-</head><body><nav><a class="brand" href="index.html"><b>GOYAL</b><span>ELECTRICAL<small>Admin Panel</small></span></a><a class="btn" href="index.html">Client Website</a></nav><main class="admin"><div class="panel" id="login"><h2>Admin Login</h2><p class="small">This GitHub Pages version uses browser-local admin storage. It is suitable for managing this device; use a real backend for multi-user secure administration.</p><input id="pw" type="password" placeholder="Admin password"><button class="btn red" onclick="login()">Login</button></div><div id="dash" style="display:none"><div class="panel"><h2>Dashboard</h2><p>Products: <b id="pc"></b></p><p>Gallery photos: <b id="gc"></b></p></div><div class="panel"><h2>Showroom Gallery</h2><p class="small">Paste image URLs here, one per line. For your Google Photos album, download the photos and upload them to the repository's assets folder, then paste their GitHub Pages paths.</p><textarea id="urls" rows="6" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:9px"></textarea><br><button class="btn green" onclick="saveGallery()">Save Gallery</button><button class="btn danger" onclick="clearGallery()">Clear Gallery</button><div id="gallery" class="gallery-list" style="margin-top:20px"></div>
+</head><body><nav><a class="brand" href="index.html"><b>GOYAL</b><span>ELECTRICAL<small>Admin Panel</small></span></a><a class="btn" href="index.html">Client Website</a></nav><main class="admin"><div class="panel" id="login"><h2>Admin Login</h2><p class="small">This GitHub Pages version uses browser-local admin storage. It is suitable for managing this device; use a real backend for multi-user secure administration.</p><input id="pw" type="password" placeholder="Admin password"><button class="btn red" onclick="login()">Login</button></div><div id="dash" style="display:none"><div class="panel"><h2>Dashboard</h2><p>Products: <b id="pc"></b></p><p>Gallery photos: <b id="gc"></b></p></div><div class="panel"><h2>Showroom Gallery</h2>
+<p class="small">Add showroom photos/videos using your camera, phone gallery, or a direct image/video link.</p>
+<div class="media-actions">
+<label class="media-btn">📷 Take Photo<input id="galleryCameraImage" type="file" accept="image/*" capture="environment" onchange="addGalleryFile(this)"></label>
+<label class="media-btn">🎥 Record Video<input id="galleryCameraVideo" type="file" accept="video/*" capture="environment" onchange="addGalleryFile(this)"></label>
+<label class="media-btn">🖼️ Photo from Gallery<input id="galleryPhoto" type="file" accept="image/*" onchange="addGalleryFile(this)"></label>
+<label class="media-btn">🎬 Video from Gallery<input id="galleryVideo" type="file" accept="video/*" onchange="addGalleryFile(this)"></label>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px">
+<input id="galleryLink" placeholder="Paste image/video link">
+<button class="btn green" onclick="addGalleryLink()">Add Link</button>
+</div>
+<div id="gallery" class="gallery-list" style="margin-top:20px"></div>
+<button class="btn danger" style="margin-top:15px" onclick="clearGallery()">Clear Gallery</button>
 </div>
 <div class="panel">
 <h2>Add Product</h2>
@@ -38,9 +51,13 @@
 </div>
 </div><div class="panel"><h2>Admin Notes</h2><p>Product master is stored in <code>products.js</code>. The client panel searches the full catalogue and sends enquiries to WhatsApp.</p><p class="small">For production-grade authentication, shared customer data and cross-device edits, connect this frontend to Supabase/Firebase or another backend.</p></div></div></main><script src="products.js"></script><script>
 function login(){if(document.getElementById("pw").value==="goyal123"){localStorage.setItem("goyal_admin","1");show()}else alert("Incorrect password")}
-function show(){document.getElementById("login").style.display="none";document.getElementById("dash").style.display="block";document.getElementById("pc").textContent=(window.GOYAL_PRODUCTS?.products||[]).length;const a=JSON.parse(localStorage.getItem("goyal_gallery")||"[]");document.getElementById("gc").textContent=a.length;document.getElementById("urls").value=a.join("\n");document.getElementById("gallery").innerHTML=a.map(x=>`<img src="${x}">`).join("")}
-function saveGallery(){const a=document.getElementById("urls").value.split("\n").map(x=>x.trim()).filter(Boolean);localStorage.setItem("goyal_gallery",JSON.stringify(a));show();alert("Gallery saved on this device.")}
-function clearGallery(){localStorage.removeItem("goyal_gallery");show()}
+function galleryItems(){return JSON.parse(localStorage.getItem("goyal_gallery")||"[]")}
+function galleryRender(x,i){if(x.type==="video")return '<div class="media-card"><video src="'+x.src+'" controls playsinline></video><button class="btn danger" onclick="deleteGallery('+i+')">Delete</button></div>';return '<div class="media-card"><img src="'+x.src+'" alt="Showroom"><button class="btn danger" onclick="deleteGallery('+i+')">Delete</button></div>'}
+function show(){document.getElementById("login").style.display="none";document.getElementById("dash").style.display="block";document.getElementById("pc").textContent=(window.GOYAL_PRODUCTS?.products||[]).length;const a=galleryItems();document.getElementById("gc").textContent=a.length;document.getElementById("gallery").innerHTML=a.map(galleryRender).join("")}
+function addGalleryFile(input){const f=input.files&&input.files[0];if(!f)return;if(f.size>6*1024*1024){alert("Please use a file smaller than 6 MB because this version stores media in the browser.");return}const r=new FileReader();r.onload=()=>{const a=galleryItems();a.push({type:f.type.startsWith("video/")?"video":"image",src:r.result});localStorage.setItem("goyal_gallery",JSON.stringify(a));show()};r.readAsDataURL(f)}
+function addGalleryLink(){const u=document.getElementById("galleryLink").value.trim();if(!u)return;const type=/\.(mp4|webm|ogg)(\?.*)?$/i.test(u)?"video":"image";const a=galleryItems();a.push({type,src:u});localStorage.setItem("goyal_gallery",JSON.stringify(a));document.getElementById("galleryLink").value="";show()}
+function deleteGallery(i){const a=galleryItems();a.splice(i,1);localStorage.setItem("goyal_gallery",JSON.stringify(a));show()}
+function clearGallery(){if(confirm("Clear all showroom media?")){localStorage.removeItem("goyal_gallery");show()}}
 if(localStorage.getItem("goyal_admin")==="1")show();
 function localProducts(){return JSON.parse(localStorage.getItem("goyal_local_products")||"[]")}
 let productImageData="";
