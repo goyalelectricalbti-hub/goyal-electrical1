@@ -1,7 +1,90 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Goyal Electrical Admin</title><link rel="stylesheet" href="styles.css"><style>.admin{max-width:1100px;margin:auto;padding:35px 5%}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:25px;margin:18px 0}.admin input{padding:12px;border:1px solid #ddd;border-radius:9px;width:100%;margin:7px 0}.danger{background:#b42318;color:#fff;border:0}.small{font-size:12px;color:#667085}.gallery-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.gallery-list img{width:100%;height:180px;object-fit:cover;border-radius:12px}@media(max-width:700px){.gallery-list{grid-template-columns:1fr}}</style></head><body><nav><a class="brand" href="index.html"><b>GOYAL</b><span>ELECTRICAL<small>Admin Panel</small></span></a><a class="btn" href="index.html">Client Website</a></nav><main class="admin"><div class="panel" id="login"><h2>Admin Login</h2><p class="small">This GitHub Pages version uses browser-local admin storage. It is suitable for managing this device; use a real backend for multi-user secure administration.</p><input id="pw" type="password" placeholder="Admin password"><button class="btn red" onclick="login()">Login</button></div><div id="dash" style="display:none"><div class="panel"><h2>Dashboard</h2><p>Products: <b id="pc"></b></p><p>Gallery photos: <b id="gc"></b></p></div><div class="panel"><h2>Showroom Gallery</h2><p class="small">Paste image URLs here, one per line. For your Google Photos album, download the photos and upload them to the repository's assets folder, then paste their GitHub Pages paths.</p><textarea id="urls" rows="6" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:9px"></textarea><br><button class="btn green" onclick="saveGallery()">Save Gallery</button><button class="btn danger" onclick="clearGallery()">Clear Gallery</button><div id="gallery" class="gallery-list" style="margin-top:20px"></div></div><div class="panel"><h2>Admin Notes</h2><p>Product master is stored in <code>products.js</code>. The client panel searches the full catalogue and sends enquiries to WhatsApp.</p><p class="small">For production-grade authentication, shared customer data and cross-device edits, connect this frontend to Supabase/Firebase or another backend.</p></div></div></main><script src="products.js"></script><script>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Goyal Electrical Admin</title><link rel="stylesheet" href="styles.css"><style>.admin{max-width:1100px;margin:auto;padding:35px 5%}.panel{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:25px;margin:18px 0}.admin input{padding:12px;border:1px solid #ddd;border-radius:9px;width:100%;margin:7px 0}.danger{background:#b42318;color:#fff;border:0}.small{font-size:12px;color:#667085}.gallery-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.gallery-list img{width:100%;height:180px;object-fit:cover;border-radius:12px}@media(max-width:700px){.gallery-list{grid-template-columns:1fr}}</style>
+<style>
+.media-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0}
+.media-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border:1px solid #d0d5dd;border-radius:12px;background:#f8fafc;cursor:pointer;font-weight:700}
+.media-btn input{display:none}
+.preview{max-width:180px;max-height:180px;border-radius:12px;margin-top:10px;object-fit:cover}
+.product-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.product-form textarea,.product-form select{padding:12px;border:1px solid #ddd;border-radius:9px;width:100%}
+.product-form .full{grid-column:1/-1}
+.product-card{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:10px}
+.pdf-status{padding:10px;background:#f8fafc;border-radius:9px;margin-top:8px}
+@media(max-width:700px){.media-actions,.product-form{grid-template-columns:1fr}}
+</style>
+</head><body><nav><a class="brand" href="index.html"><b>GOYAL</b><span>ELECTRICAL<small>Admin Panel</small></span></a><a class="btn" href="index.html">Client Website</a></nav><main class="admin"><div class="panel" id="login"><h2>Admin Login</h2><p class="small">This GitHub Pages version uses browser-local admin storage. It is suitable for managing this device; use a real backend for multi-user secure administration.</p><input id="pw" type="password" placeholder="Admin password"><button class="btn red" onclick="login()">Login</button></div><div id="dash" style="display:none"><div class="panel"><h2>Dashboard</h2><p>Products: <b id="pc"></b></p><p>Gallery photos: <b id="gc"></b></p></div><div class="panel"><h2>Showroom Gallery</h2><p class="small">Paste image URLs here, one per line. For your Google Photos album, download the photos and upload them to the repository's assets folder, then paste their GitHub Pages paths.</p><textarea id="urls" rows="6" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:9px"></textarea><br><button class="btn green" onclick="saveGallery()">Save Gallery</button><button class="btn danger" onclick="clearGallery()">Clear Gallery</button><div id="gallery" class="gallery-list" style="margin-top:20px"></div>
+</div>
+<div class="panel">
+<h2>Add Product</h2>
+<p class="small">Add a product manually, or choose a PDF catalogue/product sheet. You can take a photo with the camera or select an image from your phone gallery.</p>
+<div class="media-actions">
+<label class="media-btn">📷 Camera<input id="cameraImage" type="file" accept="image/*" capture="environment" onchange="pickProductImage(this)"></label>
+<label class="media-btn">🖼️ Gallery<input id="galleryImage" type="file" accept="image/*" onchange="pickProductImage(this)"></label>
+</div>
+<img id="productPreview" class="preview" style="display:none">
+<div class="product-form">
+<input id="pName" placeholder="Product name">
+<input id="pSku" placeholder="SKU / Model">
+<input id="pCategory" placeholder="Category">
+<input id="pPrice" type="number" step="0.01" placeholder="List price">
+<textarea id="pDesc" class="full" rows="4" placeholder="Product description"></textarea>
+</div>
+<button class="btn green" style="margin-top:12px" onclick="addManualProduct()">➕ Add Product</button>
+<hr style="margin:24px 0">
+<h3>📄 Add from PDF</h3>
+<input id="pdfFile" type="file" accept="application/pdf">
+<div id="pdfStatus" class="pdf-status">Select a PDF. Text from the first page will be used to create a product draft.</div>
+<button class="btn" style="margin-top:10px" onclick="readProductPdf()">Read PDF</button>
+<div id="localProducts"></div>
+</div>
+</div><div class="panel"><h2>Admin Notes</h2><p>Product master is stored in <code>products.js</code>. The client panel searches the full catalogue and sends enquiries to WhatsApp.</p><p class="small">For production-grade authentication, shared customer data and cross-device edits, connect this frontend to Supabase/Firebase or another backend.</p></div></div></main><script src="products.js"></script><script>
 function login(){if(document.getElementById("pw").value==="goyal123"){localStorage.setItem("goyal_admin","1");show()}else alert("Incorrect password")}
 function show(){document.getElementById("login").style.display="none";document.getElementById("dash").style.display="block";document.getElementById("pc").textContent=(window.GOYAL_PRODUCTS?.products||[]).length;const a=JSON.parse(localStorage.getItem("goyal_gallery")||"[]");document.getElementById("gc").textContent=a.length;document.getElementById("urls").value=a.join("\n");document.getElementById("gallery").innerHTML=a.map(x=>`<img src="${x}">`).join("")}
 function saveGallery(){const a=document.getElementById("urls").value.split("\n").map(x=>x.trim()).filter(Boolean);localStorage.setItem("goyal_gallery",JSON.stringify(a));show();alert("Gallery saved on this device.")}
 function clearGallery(){localStorage.removeItem("goyal_gallery");show()}
 if(localStorage.getItem("goyal_admin")==="1")show();
-</script></body></html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script>
+let productImageData="";
+function pickProductImage(input){
+ const f=input.files&&input.files[0]; if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{productImageData=r.result;const im=document.getElementById("productPreview");im.src=productImageData;im.style.display="block";};
+ r.readAsDataURL(f);
+}
+function localProducts(){return JSON.parse(localStorage.getItem("goyal_local_products")||"[]")}
+function renderLocalProducts(){
+ const a=localProducts(); const box=document.getElementById("localProducts");
+ box.innerHTML=a.map((p,i)=>'<div class="product-card"><b>'+esc(p.name)+'</b><div class="small">'+esc(p.sku||"")+' · '+esc(p.category||"")+'</div><div>'+esc(p.description||"")+'</div><button class="btn danger" style="margin-top:8px" onclick="deleteLocalProduct('+i+')">Delete</button></div>').join("");
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function addManualProduct(){
+ const p={name:document.getElementById("pName").value.trim(),sku:document.getElementById("pSku").value.trim(),category:document.getElementById("pCategory").value.trim(),price:document.getElementById("pPrice").value,description:document.getElementById("pDesc").value.trim(),image:productImageData};
+ if(!p.name){alert("Please enter product name");return}
+ const a=localProducts();a.push(p);localStorage.setItem("goyal_local_products",JSON.stringify(a));clearProductForm();renderLocalProducts();alert("Product added on this device.");
+}
+function clearProductForm(){["pName","pSku","pCategory","pPrice","pDesc"].forEach(id=>document.getElementById(id).value="");productImageData="";document.getElementById("productPreview").style.display="none"}
+function deleteLocalProduct(i){const a=localProducts();a.splice(i,1);localStorage.setItem("goyal_local_products",JSON.stringify(a));renderLocalProducts()}
+async function readProductPdf(){
+ const f=document.getElementById("pdfFile").files[0]; if(!f){alert("Please select a PDF");return}
+ const status=document.getElementById("pdfStatus");status.textContent="Reading PDF…";
+ try{
+  const pdfjs=await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
+  const data=new Uint8Array(await f.arrayBuffer());
+  const pdf=await pdfjs.getDocument({data}).promise;
+  const page=await pdf.getPage(1);
+  const tc=await page.getTextContent();
+  const text=tc.items.map(x=>x.str).join(" ").replace(/\s+/g," ").trim();
+  const viewport=page.getViewport({scale:1.4}), canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+  canvas.width=viewport.width;canvas.height=viewport.height;
+  await page.render({canvasContext:ctx,viewport}).promise;
+  productImageData=canvas.toDataURL("image/jpeg",.82);
+  document.getElementById("productPreview").src=productImageData;
+  document.getElementById("productPreview").style.display="block";
+  document.getElementById("pDesc").value=text.slice(0,5000);
+  if(!document.getElementById("pName").value)document.getElementById("pName").value=f.name.replace(/\.pdf$/i,"");
+  status.textContent="PDF read. First-page preview and extracted text are ready. Please review/edit the fields, then click Add Product.";
+ }catch(e){console.error(e);status.textContent="Could not read this PDF in the browser. You can still add the product manually.";alert("PDF reading failed. Try a text-based PDF or add it manually.")}
+}
+renderLocalProducts();
+</script></script></body></html>
