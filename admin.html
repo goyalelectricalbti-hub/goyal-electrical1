@@ -42,49 +42,13 @@ function show(){document.getElementById("login").style.display="none";document.g
 function saveGallery(){const a=document.getElementById("urls").value.split("\n").map(x=>x.trim()).filter(Boolean);localStorage.setItem("goyal_gallery",JSON.stringify(a));show();alert("Gallery saved on this device.")}
 function clearGallery(){localStorage.removeItem("goyal_gallery");show()}
 if(localStorage.getItem("goyal_admin")==="1")show();
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
-<script>
-let productImageData="";
-function pickProductImage(input){
- const f=input.files&&input.files[0]; if(!f)return;
- const r=new FileReader();
- r.onload=()=>{productImageData=r.result;const im=document.getElementById("productPreview");im.src=productImageData;im.style.display="block";};
- r.readAsDataURL(f);
-}
 function localProducts(){return JSON.parse(localStorage.getItem("goyal_local_products")||"[]")}
-function renderLocalProducts(){
- const a=localProducts(); const box=document.getElementById("localProducts");
- box.innerHTML=a.map((p,i)=>'<div class="product-card"><b>'+esc(p.name)+'</b><div class="small">'+esc(p.sku||"")+' · '+esc(p.category||"")+'</div><div>'+esc(p.description||"")+'</div><button class="btn danger" style="margin-top:8px" onclick="deleteLocalProduct('+i+')">Delete</button></div>').join("");
-}
+let productImageData="";
+function pickProductImage(input){const f=input.files&&input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{productImageData=r.result;const im=document.getElementById("productPreview");im.src=productImageData;im.style.display="block"};r.readAsDataURL(f)}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-function addManualProduct(){
- const p={name:document.getElementById("pName").value.trim(),sku:document.getElementById("pSku").value.trim(),category:document.getElementById("pCategory").value.trim(),price:document.getElementById("pPrice").value,description:document.getElementById("pDesc").value.trim(),image:productImageData};
- if(!p.name){alert("Please enter product name");return}
- const a=localProducts();a.push(p);localStorage.setItem("goyal_local_products",JSON.stringify(a));clearProductForm();renderLocalProducts();alert("Product added on this device.");
-}
-function clearProductForm(){["pName","pSku","pCategory","pPrice","pDesc"].forEach(id=>document.getElementById(id).value="");productImageData="";document.getElementById("productPreview").style.display="none"}
+function renderLocalProducts(){const a=localProducts();document.getElementById("localProducts").innerHTML=a.map((p,i)=>'<div class="product-card"><b>'+esc(p.name)+'</b><div class="small">'+esc(p.sku)+' · '+esc(p.category)+'</div><div>'+esc(p.description)+'</div><button class="btn danger" onclick="deleteLocalProduct('+i+')">Delete</button></div>').join("")}
+function addManualProduct(){const p={name:pName.value.trim(),sku:pSku.value.trim(),category:pCategory.value.trim(),price:pPrice.value,description:pDesc.value.trim(),image:productImageData};if(!p.name){alert("Please enter product name");return}const a=localProducts();a.push(p);localStorage.setItem("goyal_local_products",JSON.stringify(a));alert("Product added on this device.");renderLocalProducts()}
 function deleteLocalProduct(i){const a=localProducts();a.splice(i,1);localStorage.setItem("goyal_local_products",JSON.stringify(a));renderLocalProducts()}
-async function readProductPdf(){
- const f=document.getElementById("pdfFile").files[0]; if(!f){alert("Please select a PDF");return}
- const status=document.getElementById("pdfStatus");status.textContent="Reading PDF…";
- try{
-  const pdfjs=await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
-  const data=new Uint8Array(await f.arrayBuffer());
-  const pdf=await pdfjs.getDocument({data}).promise;
-  const page=await pdf.getPage(1);
-  const tc=await page.getTextContent();
-  const text=tc.items.map(x=>x.str).join(" ").replace(/\s+/g," ").trim();
-  const viewport=page.getViewport({scale:1.4}), canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
-  canvas.width=viewport.width;canvas.height=viewport.height;
-  await page.render({canvasContext:ctx,viewport}).promise;
-  productImageData=canvas.toDataURL("image/jpeg",.82);
-  document.getElementById("productPreview").src=productImageData;
-  document.getElementById("productPreview").style.display="block";
-  document.getElementById("pDesc").value=text.slice(0,5000);
-  if(!document.getElementById("pName").value)document.getElementById("pName").value=f.name.replace(/\.pdf$/i,"");
-  status.textContent="PDF read. First-page preview and extracted text are ready. Please review/edit the fields, then click Add Product.";
- }catch(e){console.error(e);status.textContent="Could not read this PDF in the browser. You can still add the product manually.";alert("PDF reading failed. Try a text-based PDF or add it manually.")}
-}
+async function readProductPdf(){const f=document.getElementById("pdfFile").files[0];if(!f){alert("Please select a PDF");return}const status=document.getElementById("pdfStatus");status.textContent="Reading PDF…";try{const pdfjs=await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");const pdf=await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;const page=await pdf.getPage(1);const tc=await page.getTextContent();pDesc.value=tc.items.map(x=>x.str).join(" ").replace(/\s+/g," ").trim().slice(0,5000);if(!pName.value)pName.value=f.name.replace(/\.pdf$/i,"");status.textContent="PDF text extracted. Review the fields and click Add Product.";const canvas=document.createElement("canvas"),v=page.getViewport({scale:1.2}),ctx=canvas.getContext("2d");canvas.width=v.width;canvas.height=v.height;await page.render({canvasContext:ctx,viewport:v}).promise;productImageData=canvas.toDataURL("image/jpeg",.8);productPreview.src=productImageData;productPreview.style.display="block"}catch(e){status.textContent="Could not read this PDF.";alert("PDF reading failed. You can add the product manually.")}}
 renderLocalProducts();
-</script></script></body></html>
+</script></body></html>
